@@ -114,7 +114,7 @@ public class UserService {
 			}
 		}
 		}
-		
+		userInfo.setSync(true);
 		userInfoRepository.save(userInfo);
 	}
 
