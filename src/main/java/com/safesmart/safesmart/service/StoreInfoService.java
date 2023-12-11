@@ -112,6 +112,7 @@ public class StoreInfoService {
 		storeInfo.setCorp(c);
 		
 		storeInfo.setActionStatus(ActionStatus.Created);
+		storeInfo.setSync(true);
 		storeInfoRepository.save(storeInfo);
 
 	}

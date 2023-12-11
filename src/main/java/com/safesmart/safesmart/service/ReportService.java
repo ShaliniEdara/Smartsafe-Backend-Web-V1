@@ -249,141 +249,167 @@ public class ReportService {
 	
 	//PickupAmount  report service 
 	
-	public InsertBillsReportDto pickupAmountReport(String storeName) {
-		StoreInfoResponse storeInfoResponse = storeInfoService.getStoreInfoService(storeName);
-		System.out.println("storename is -------"+storeInfoResponse.getStoreName());
-		InsertBillsReportDto reportDto = new InsertBillsReportDto();
-		reportDto.setStoreInfoResponse(storeInfoResponse);
-		reportDto.setReportName("Pickup Amount  Receipt");
-		SimpleDateFormat myFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss");
-		reportDto.setTimeStamp(myFormat.format(Calendar.getInstance().getTime()));
-		InsertBill insertBillInfo = new InsertBill();
-		if(storeInfoResponse != null) {
-			List<UserInfo>  userInfoList = userInfoRepository.findByStoreInfo_Id(storeInfoResponse.getId());
-			LocalDateTime withDrawDate = LocalDateTime.now();
-			for(UserInfo userInfo : userInfoList) {
-				if(userInfo != null) {
-					List<InsertBill> list = insertBillRepository.findByUser_Id(userInfo.getId());
-					for(InsertBill insertBill : list) {
-						if(insertBill != null) {
-							if (insertBill.getWithDrawDateTime() == null && insertBill.getWithDrawDateTime() != LocalDateTime.now()) {
-								insertBillInfo.setWithDrawDateTime(LocalDateTime.now());
-							} else {
-								insertBillInfo.setWithDrawDateTime(insertBill.getWithDrawDateTime());
+		public InsertBillsReportDto pickupAmountReport(String storeName) {
+			StoreInfoResponse storeInfoResponse = storeInfoService.getStoreInfoService(storeName);
+			System.out.println("storename is -------"+storeInfoResponse.getStoreName());
+			InsertBillsReportDto reportDto = new InsertBillsReportDto();
+			reportDto.setStoreInfoResponse(storeInfoResponse);
+			reportDto.setReportName("Pickup Amount  Receipt");
+			SimpleDateFormat myFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss");
+			reportDto.setTimeStamp(myFormat.format(Calendar.getInstance().getTime()));
+			InsertBill insertBillInfo = new InsertBill();
+			if(storeInfoResponse != null) {
+				List<UserInfo>  userInfoList = userInfoRepository.findByStoreInfo_Id(storeInfoResponse.getId());
+				LocalDateTime withDrawDate = LocalDateTime.now();
+				Collection<BillResponse> result = new ArrayList<BillResponse>();
+				int count = 0;
+				int sum = 0;
+				int totalsum = 0;
+				for(UserInfo userInfo : userInfoList) {
+					if(userInfo != null) {
+						List<InsertBill> list = insertBillRepository.findByUser_Id(userInfo.getId());
+						for(InsertBill insertBill : list) {
+							if(insertBill != null) {
+								if (insertBill.getWithDrawDateTime() == null && insertBill.getWithDrawDateTime() != LocalDateTime.now()) {
+									insertBillInfo.setWithDrawDateTime(LocalDateTime.now());
+								} else {
+									insertBillInfo.setWithDrawDateTime(insertBill.getWithDrawDateTime());
+								}
+	 				            insertBillInfo.setWithDrawStatus(insertBill.isWithDrawStatus());
+								insertBillInfo.setActionStatus(insertBill.getActionStatus());
+								insertBillInfo.setId(insertBill.getId());
+								insertBillInfo.setAmount(insertBill.getAmount());
+								insertBillInfo.setCreatedOn(insertBill.getCreatedOn());
+								insertBillInfo.setDateTime(insertBill.getDateTime());
+								insertBillInfo.setIdentifier(insertBill.getIdentifier());
+								insertBillInfo.setTransactionNumber(insertBill.getTransactionNumber());
+								insertBillInfo.setUser(insertBill.getUser());
+								insertBillInfo.setSync(insertBill.isSync());
+								insertBillRepository.save(insertBillInfo);
 							}
- 				            insertBillInfo.setWithDrawStatus(insertBill.isWithDrawStatus());
-							insertBillInfo.setActionStatus(insertBill.getActionStatus());
-							insertBillInfo.setId(insertBill.getId());
-							insertBillInfo.setAmount(insertBill.getAmount());
-							insertBillInfo.setCreatedOn(insertBill.getCreatedOn());
-							insertBillInfo.setDateTime(insertBill.getDateTime());
-							insertBillInfo.setIdentifier(insertBill.getIdentifier());
-							insertBillInfo.setTransactionNumber(insertBill.getTransactionNumber());
-							insertBillInfo.setUser(insertBill.getUser());
-							insertBillInfo.setSync(insertBill.isSync());
-							insertBillRepository.save(insertBillInfo);
-						}
+							
+						}//Insert Bill loop end here
 						
-					}//Insert Bill loop end here
-					
-					DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-					String formattedDateTime = withDrawDate.format(formatter);
-					LocalDateTime localDateTime = LocalDateTime.parse(formattedDateTime, formatter);
-					System.out.println("today date and time are -----" + localDateTime);
-					//List<InsertBill> withdrawList = insertBillRepository.findByWithDrawDateTime(localDateTime);
-					//List<InsertBill> withdrawList = insertBillRepository.findByUser_IdAndWithDrawDateTime(userInfo.getId(),localDateTime);
-					//List<InsertBill> withdrawList = insertBillRepository.findByWithDrawStatus(false);
-					//List<InsertBill> withdrawList = insertBillRepository.findByUser_IdAndWithDrawStatus(userInfo.getId(),false);
-					
-                    List<LocalDateTime> insertBill1= insertBillRepository.findByWithDrawDateTime();
-                    List<InsertBill> withdrawList =new ArrayList<>();
-					//System.out.println("lastpickup date is------------"+insertBill1.size());
-                    if(insertBill1.size()!=0) {
-                    LocalDateTime lastPickupDate =insertBill1.get(insertBill1.size()-1);
-					System.out.println("lastpickup date is-- ------"+lastPickupDate);
-					withdrawList = insertBillRepository.findByUser_IdAndWithDrawDateTime(userInfo.getId(),lastPickupDate);
+						
+						
+						DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+						String formattedDateTime = withDrawDate.format(formatter);
+						LocalDateTime localDateTime = LocalDateTime.parse(formattedDateTime, formatter);
+						System.out.println("today date and time are -----" + localDateTime);
+						//List<InsertBill> withdrawList = insertBillRepository.findByWithDrawDateTime(localDateTime);
+						//List<InsertBill> withdrawList = insertBillRepository.findByUser_IdAndWithDrawDateTime(userInfo.getId(),localDateTime);
+						//List<InsertBill> withdrawList = insertBillRepository.findByWithDrawStatus(false);
+						List<InsertBill> withdrawList = insertBillRepository.findByUser_IdAndWithDrawStatus(userInfo.getId(),false);
+						
+//	                    List<LocalDateTime> insertBill1= insertBillRepository.findByWithDrawDateTime();
+//	                    List<InsertBill> withdrawList =new ArrayList<>();
+//						//System.out.println("lastpickup date is------------"+insertBill1.size());
+//	                    if(insertBill1.size()!=0) {
+//	                    LocalDateTime lastPickupDate =insertBill1.get(insertBill1.size()-1);
+//						System.out.println("lastpickup date is-- ------"+lastPickupDate);
+//						withdrawList = insertBillRepository.findByUser_IdAndWithDrawDateTime(userInfo.getId(),lastPickupDate);
+	//
+//	                    }
+						
 
-                    }
-					
+						Map<String, InsertBillResponse> map = new HashMap<String, InsertBillResponse>();
+						for(InsertBill insert : withdrawList) {
+							if(insert!=null) {
+							System.out.println("hello-------------------------------");
+							System.out.println("the "+userInfo.getUsername()+" pickup amount is----"+insert.getAmount());
+							System.out.println("--------------------------"+map.get(insert.getAmount()));
+							if (map.get(insert.getAmount()) != null) {
+								System.out.println("we are  in if black---------------------");
+								InsertBillResponse insertBill = map.get(insert.getAmount());
+								int count1 = insertBill.getCount() + 1;
+								insertBill.setCount(count1);
+								map.put(insert.getAmount(), insertBill);
+							} else {
+								System.out.println("we are  in else  black---------------------");
+								InsertBillResponse billResponse = new InsertBillResponse();
+								billResponse.setAmount(insert.getAmount());
+								billResponse.setCount(1);
+								map.put(insert.getAmount(), billResponse);
 
-					Map<String, InsertBillResponse> map = new HashMap<String, InsertBillResponse>();
-					for(InsertBill insert : withdrawList) {
-						if(insert!=null) {
-						System.out.println("hello-------------------------------");
-						System.out.println("the "+userInfo.getUsername()+" pickup amount is----"+insert.getAmount());
-						System.out.println("--------------------------"+map.get(insert.getAmount()));
-						if (map.get(insert.getAmount()) != null) {
-							System.out.println("we are  in if black---------------------");
-							InsertBillResponse insertBill = map.get(insert.getAmount());
-							int count = insertBill.getCount() + 1;
-							insertBill.setCount(count);
-							map.put(insert.getAmount(), insertBill);
-						} else {
-							System.out.println("we are  in else  black---------------------");
-							InsertBillResponse billResponse = new InsertBillResponse();
-							billResponse.setAmount(insert.getAmount());
-							billResponse.setCount(1);
-							map.put(insert.getAmount(), billResponse);
+							}
 
 						}
-
 					}
-				}
-					
-					Collection<BillResponse> result = new ArrayList<BillResponse>();
-					int count = 0;
-					int sum = 0;
-					for (Dollar dollar : Dollar.values()) {
-						if (map.get(dollar.getDollar()) != null) {
-							InsertBillResponse billResponse = map.get(dollar.getDollar());
-							BillResponse response = new BillResponse();
-							response.setCurrency(dollar.getDollar());
-							response.setValue(billResponse.calculateSum(dollar.getValue()));
-							response.setCount(billResponse.getCount());
-							count = count + billResponse.getCount();
-							sum = sum + response.getValue();
-							result.add(response);
+						
+//						Collection<BillResponse> result = new ArrayList<BillResponse>();
+//						int count = 0;
+//						int sum = 0;
+						for (Dollar dollar : Dollar.values()) {
+							if (map.get(dollar.getDollar()) != null) {
+								InsertBillResponse billResponse = map.get(dollar.getDollar());
+								BillResponse response = new BillResponse();
+								response.setCurrency(dollar.getDollar());
+								response.setValue(billResponse.calculateSum(dollar.getValue()));
+								response.setCount(billResponse.getCount());
+								count = count + billResponse.getCount();
+								sum = sum + response.getValue();
+								result.add(response);
+							}
+							
 						}
+//						BillResponse response = new BillResponse();
+//						response.setCurrency("All");
+//						response.setCount(count);
+//						response.setValue(sum);
+//						result.add(response);
+//						reportDto.setData(result);
+	                   
 
-					}
-					BillResponse response = new BillResponse();
-					response.setCurrency("All");
-					response.setCount(count);
-					response.setValue(sum);
-					result.add(response);
-					reportDto.setData(result);
-//					for(InsertBill insert : withdrawList) {
-//						insert.setWithDrawStatus(true);
-//						
-//					}
-
-					
-				}
-			}//userlist loop end here
-		}//store if condition ending
-		return reportDto;
-	}
-	
-	//update Withdraw ststus  service
-	public String updateWithDrawSatus(String storename) {
-		StoreInfoResponse storeInfoResponse = storeInfoService.getStoreInfoService(storename);
-	    InsertBill insertBillInfo = new InsertBill();
-		if(storeInfoResponse != null) {
-			List<UserInfo>  userInfoList = userInfoRepository.findByStoreInfo_Id(storeInfoResponse.getId());
-			for(UserInfo userInfo : userInfoList) {
-				if(userInfo != null) {
-					List<InsertBill> list = insertBillRepository.findByWithDrawStatus(false);
-					for(InsertBill insert : list) {
-						insert.setWithDrawStatus(true);
+						
 					}
 					
-				}
-			}//user for loop end here
-
+				}//userlist loop end here
+				totalsum +=sum;
+				BillResponse response = new BillResponse();
+				response.setCurrency("All");
+				response.setCount(count);
+				response.setValue(totalsum );
+				result.add(response);
+				reportDto.setData(result);
+			}//store if condition ending
+			return reportDto;
 		}
 		
-		return "updated sucessfully";
-	}
+		//update Withdraw ststus  service
+		public String updateWithDrawSatus(String storename) {
+			StoreInfoResponse storeInfoResponse = storeInfoService.getStoreInfoService(storename);
+		    InsertBill insertBillInfo = new InsertBill();
+			if(storeInfoResponse != null) {
+				List<UserInfo>  userInfoList = userInfoRepository.findByStoreInfo_Id(storeInfoResponse.getId());
+				for(UserInfo userInfo : userInfoList) {
+					System.out.println("user ids are:"+userInfo.getId());
+					if(userInfo != null) {
+						//List<InsertBill> list = insertBillRepository.findByWithDrawStatus(false);
+						List<InsertBill> list = insertBillRepository.findByUser_IdAndWithDrawStatus(userInfo.getId(),false);
+						for(InsertBill insert : list) {
+							insertBillInfo.setWithDrawStatus(true);
+							insertBillInfo.setWithDrawDateTime(insert.getWithDrawDateTime());
+							insertBillInfo.setActionStatus(insert.getActionStatus());
+							insertBillInfo.setId(insert.getId());
+							insertBillInfo.setAmount(insert.getAmount());
+							insertBillInfo.setCreatedOn(insert.getCreatedOn());
+							insertBillInfo.setDateTime(insert.getDateTime());
+							insertBillInfo.setIdentifier(insert.getIdentifier());
+							insertBillInfo.setTransactionNumber(insert.getTransactionNumber());
+							insertBillInfo.setUser(insert.getUser());
+							insertBillInfo.setSync(insert.isSync());
+							insertBillRepository.save(insertBillInfo);
+							
+						}
+						
+						
+					}
+				}//user for loop end here
+
+			}
+			
+			return "updated sucessfully";
+		}
 	
 
 	public EODReport endOfDayReport(Long userId) {
