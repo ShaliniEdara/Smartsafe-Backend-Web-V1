@@ -522,6 +522,8 @@ public class DataMigrationService extends CommonService {
 		insertBill2.setSync(insertBill.isSync());
 		insertBill2.setTransactionNumber(insertBill.getTransactionNumber());
 		insertBill2.setUser(insertBill.getUser());
+		insertBill2.setWithDrawStatus(insertBill.isWithDrawStatus());
+		insertBill2.setWithDrawDateTime(insertBill.getWithDrawDateTime());
 		return insertBill2;
 	}
 
