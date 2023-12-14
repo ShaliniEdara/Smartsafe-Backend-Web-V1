@@ -1,16 +1,12 @@
 package com.safesmart.safesmart.controller;
 
-import java.awt.print.Pageable;
 import java.io.IOException;
 //import java.lang.WeakPairMap.Pair.Weak;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.management.relation.RoleInfo;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,11 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.safesmart.safesmart.dto.LocksResponse;
-import com.safesmart.safesmart.dto.RoleConunt;
 import com.safesmart.safesmart.dto.StoreInfoRequest;
 import com.safesmart.safesmart.dto.StoreInfoResponse;
-import com.safesmart.safesmart.dto.UserInfoRequest;
 import com.safesmart.safesmart.model.BillValidator;
 import com.safesmart.safesmart.model.Kiosk;
 import com.safesmart.safesmart.model.Locks;
@@ -34,7 +27,6 @@ import com.safesmart.safesmart.repository.BillValidatorRepository;
 import com.safesmart.safesmart.repository.KioskRepository;
 import com.safesmart.safesmart.repository.LocksRepository;
 import com.safesmart.safesmart.repository.PrinterRepository;
-import com.safesmart.safesmart.repository.StoreInfoRepository;
 import com.safesmart.safesmart.repository.UserInfoRepository;
 import com.safesmart.safesmart.service.BillValidatorService;
 import com.safesmart.safesmart.service.KioskService;
