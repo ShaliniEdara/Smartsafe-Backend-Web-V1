@@ -40,6 +40,7 @@ import com.safesmart.safesmart.model.Kiosk;
 import com.safesmart.safesmart.model.Role;
 import com.safesmart.safesmart.model.StoreInfo;
 import com.safesmart.safesmart.model.UserInfo;
+import com.safesmart.safesmart.remoterepository.Remote_UserInfoRepository;
 import com.safesmart.safesmart.repository.KioskRepository;
 import com.safesmart.safesmart.repository.RoleRepository;
 import com.safesmart.safesmart.repository.StoreInfoRepository;
@@ -64,6 +65,12 @@ public class UserService {
 	
 	@Autowired
 	private  StoreInfoRepository storeInfoRepository;
+	
+	@Autowired
+    private Remote_UserInfoRepository remote_UserInfoRepository;
+
+	@Autowired
+	private DataMigrationService dataMigrationService;
 
 	public void add(UserInfoRequest userInfoRequest) {
 
@@ -139,9 +146,33 @@ public class UserService {
 			return infoResponses;
 	}
 
-	public void deleteByUser(Long userId) {
-		userInfoRepository.deleteById(userId);
-	}
+	//latest delete code 
+	
+		public void deleteByUser(Long userId) {
+			Optional<UserInfo> optional = userInfoRepository.findById(userId);
+			if (optional.isPresent()) {
+				UserInfo userInfo = optional.get();
+				userInfo.setActionStatus(ActionStatus.Deleted);
+				userInfo.setActive(false);
+				userInfo.setSync(true);
+				
+				try {
+					UserInfo remotUserInfo = remote_UserInfoRepository.findByIdentifier(userInfo.getIdentifier());
+					if(remotUserInfo != null ) {
+						remotUserInfo.setActionStatus(ActionStatus.Deleted);
+						remotUserInfo.setActive(false);
+						remotUserInfo.setSync(true);
+						remote_UserInfoRepository.save(remotUserInfo);
+						userInfoRepository.save(userInfo);
+					}
+					
+				}catch (Exception e) {
+					throw new RuntimeException("User details not found");
+				}
+			}
+			// userInfoRepository.deleteById(userId);
+		}
+
 	
 
 	public void deleteByUserD(Long days) {
@@ -217,6 +248,7 @@ public class UserService {
 		return info;
 		
 	}
+	//latest user update()
 	public void updateUser(UserInfoRequest userInfoRequest) {
 
 		Role role = roleRepository.findByName(userInfoRequest.getRole());
@@ -240,9 +272,27 @@ public class UserService {
 		info.setLastName(userInfoRequest.getLastName());
 		info.setEmail(userInfoRequest.getEmail());
 		info.setMobile(userInfoRequest.getMobile());
+		info.setActionStatus(ActionStatus.Updated);
+		UserInfo dbUserInfo = remote_UserInfoRepository.findByIdentifier(info.getIdentifier());
+		if (dbUserInfo == null) {
+			info.setSync(false);
+		}
+
+		try {
+			if(dbUserInfo != null) {
+			UserInfo upadtedUserInfo =	dataMigrationService.convertToModel(info, true);
+			upadtedUserInfo.setSync(true);
+			upadtedUserInfo.setId(dbUserInfo.getId());
+			upadtedUserInfo.setRole(dbUserInfo.getRole());
+			upadtedUserInfo.setStoreInfo(dbUserInfo.getStoreInfo());
+			remote_UserInfoRepository.save(upadtedUserInfo);
+			}
+			
+		} catch (Exception e) {
+			info.setSync(false);
+		}
+
 		userInfoRepository.save(info);
-		
-		
 
 	}
 
