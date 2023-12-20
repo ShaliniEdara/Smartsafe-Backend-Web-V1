@@ -527,67 +527,133 @@ public class DataMigrationService extends CommonService {
 		return kiosk2;
 	}
 
-	public void syncInsertBillsData() {
-		List<InsertBill> insertBillList = insertBillRepository.findBySync(false);
+//	public void syncInsertBillsData() {
+//		List<InsertBill> insertBillList = insertBillRepository.findBySync(false);
+//
+//		List<InsertBill> copyInsertBillList = cloneInsertBills(insertBillList);
+//		List<InsertBill> createdInsertBill = new ArrayList<InsertBill>();
+//
+//		if (copyInsertBillList != null && copyInsertBillList.size() > 0) {
+//			copyInsertBillList.forEach(insertBill -> {
+//				insertBill.setSync(true);
+//				if (insertBill.getUser() != null) {
+//					UserInfo remoUserInfo = remote_userInfoRepository
+//							.findByIdentifier(insertBill.getUser().getIdentifier());
+//					if (remoUserInfo != null) {
+//						insertBill.setUser(remoUserInfo);
+//					}
+//				}
+//
+//				if (insertBill.getActionStatus().name().equalsIgnoreCase("Created")) {
+//					createdInsertBill.add(insertBill);
+//				} else if (insertBill.getActionStatus().name().equalsIgnoreCase("Updated")) {
+//					InsertBill dbInsertBill = remote_insertBillRepository.findByIdentifier(insertBill.getIdentifier());
+//					if (dbInsertBill != null) {
+//						remote_insertBillRepository.save(insertBill);
+//					}
+//				}
+//			});
+//
+//			if (createdInsertBill.size() > 0) {
+//				remote_insertBillRepository.saveAll(createdInsertBill);
+//			}
+//
+//			insertBillList.forEach(inserBill -> {
+//				inserBill.setSync(true);
+//			});
+//			insertBillRepository.saveAll(insertBillList);
+//		}
+//	}
+//
+//	private List<InsertBill> cloneInsertBills(List<InsertBill> insertBillList) {
+//		List<InsertBill> list = new ArrayList<InsertBill>(insertBillList.size());
+//		insertBillList.forEach(insertBill -> {
+//			list.add(convertToInsertBillMOdel(insertBill));
+//		});
+//		return list;
+//	}
+//
+//	private InsertBill convertToInsertBillMOdel(InsertBill insertBill) {
+//		InsertBill insertBill2 = new InsertBill();
+//		insertBill2.setActionStatus(insertBill.getActionStatus());
+//		insertBill2.setAmount(insertBill.getAmount());
+//		insertBill2.setCreatedOn(insertBill.getCreatedOn());
+//		insertBill2.setDateTime(insertBill.getDateTime());
+//		insertBill2.setId(insertBill.getId());
+//		insertBill2.setIdentifier(insertBill.getIdentifier());
+//		insertBill2.setSync(insertBill.isSync());
+//		insertBill2.setTransactionNumber(insertBill.getTransactionNumber());
+//		insertBill2.setUser(insertBill.getUser());
+//		insertBill2.setWithDrawStatus(insertBill.isWithDrawStatus());
+//		insertBill2.setWithDrawDateTime(insertBill.getWithDrawDateTime());
+//		return insertBill2;
+//	}
+	
+	
+	//latest Insert bill Sync
+	     public void syncInsertBillsData() {
+			List<InsertBill> insertBillList = insertBillRepository.findBySync(false);
 
-		List<InsertBill> copyInsertBillList = cloneInsertBills(insertBillList);
-		List<InsertBill> createdInsertBill = new ArrayList<InsertBill>();
+			List<InsertBill> copyInsertBillList = cloneInsertBills(insertBillList);
+			//List<InsertBill> createdInsertBill = new ArrayList<InsertBill>();
 
-		if (copyInsertBillList != null && copyInsertBillList.size() > 0) {
-			copyInsertBillList.forEach(insertBill -> {
-				insertBill.setSync(true);
-				if (insertBill.getUser() != null) {
-					UserInfo remoUserInfo = remote_userInfoRepository
-							.findByIdentifier(insertBill.getUser().getIdentifier());
-					if (remoUserInfo != null) {
-						insertBill.setUser(remoUserInfo);
+			if (copyInsertBillList != null && !copyInsertBillList.isEmpty()) {
+				
+				for(InsertBill insertBill : copyInsertBillList)
+				{
+					insertBill.setSync(true);
+					if (insertBill.getUser() != null) {
+						UserInfo remoUserInfo = remote_userInfoRepository
+								.findByIdentifier(insertBill.getUser().getIdentifier());
+						if (remoUserInfo != null) {
+							insertBill.setUser(remoUserInfo);
+						}
+					InsertBill remortInsertBill = remote_insertBillRepository.findByIdentifier(insertBill.getUser().getIdentifier());
+
+					if (remortInsertBill == null) {
+						remote_insertBillRepository.save(convertToInsertBillMOdel(insertBill, true));
+					} else  {
+						InsertBill dbInsertBill = convertToInsertBillMOdel(insertBill, true);
+					   dbInsertBill.setId(remortInsertBill.getId());
+					   dbInsertBill.setUser(remortInsertBill.getUser());
+					   remote_insertBillRepository.save(dbInsertBill);
 					}
-				}
-
-				if (insertBill.getActionStatus().name().equalsIgnoreCase("Created")) {
-					createdInsertBill.add(insertBill);
-				} else if (insertBill.getActionStatus().name().equalsIgnoreCase("Updated")) {
-					InsertBill dbInsertBill = remote_insertBillRepository.findByIdentifier(insertBill.getIdentifier());
-					if (dbInsertBill != null) {
-						remote_insertBillRepository.save(insertBill);
 					}
-				}
-			});
-
-			if (createdInsertBill.size() > 0) {
-				remote_insertBillRepository.saveAll(createdInsertBill);
+				
+				insertBillList.forEach(inserBill -> {
+					inserBill.setSync(true);
+				});
+				
+				insertBillRepository.saveAll(insertBillList);
 			}
-
-			insertBillList.forEach(inserBill -> {
-				inserBill.setSync(true);
-			});
-			insertBillRepository.saveAll(insertBillList);
+			}
 		}
-	}
 
-	private List<InsertBill> cloneInsertBills(List<InsertBill> insertBillList) {
-		List<InsertBill> list = new ArrayList<InsertBill>(insertBillList.size());
-		insertBillList.forEach(insertBill -> {
-			list.add(convertToInsertBillMOdel(insertBill));
-		});
-		return list;
-	}
 
-	private InsertBill convertToInsertBillMOdel(InsertBill insertBill) {
-		InsertBill insertBill2 = new InsertBill();
-		insertBill2.setActionStatus(insertBill.getActionStatus());
-		insertBill2.setAmount(insertBill.getAmount());
-		insertBill2.setCreatedOn(insertBill.getCreatedOn());
-		insertBill2.setDateTime(insertBill.getDateTime());
-		insertBill2.setId(insertBill.getId());
-		insertBill2.setIdentifier(insertBill.getIdentifier());
-		insertBill2.setSync(insertBill.isSync());
-		insertBill2.setTransactionNumber(insertBill.getTransactionNumber());
-		insertBill2.setUser(insertBill.getUser());
-		insertBill2.setWithDrawStatus(insertBill.isWithDrawStatus());
-		insertBill2.setWithDrawDateTime(insertBill.getWithDrawDateTime());
-		return insertBill2;
-	}
+		private List<InsertBill> cloneInsertBills(List<InsertBill> insertBillList) {
+			List<InsertBill> list = new ArrayList<InsertBill>(insertBillList.size());
+			insertBillList.forEach(insertBill -> {
+				list.add(convertToInsertBillMOdel(insertBill,true));
+			});
+			return list;
+		}
+
+		public InsertBill convertToInsertBillMOdel(InsertBill insertBill,boolean update) {
+			InsertBill insertBill2 = new InsertBill();
+			insertBill2.setActionStatus(insertBill.getActionStatus());
+			insertBill2.setAmount(insertBill.getAmount());
+			insertBill2.setCreatedOn(insertBill.getCreatedOn());
+			insertBill2.setDateTime(insertBill.getDateTime());
+			insertBill2.setId(insertBill.getId());
+			insertBill2.setIdentifier(insertBill.getIdentifier());
+			insertBill2.setSync(insertBill.isSync());
+			insertBill2.setTransactionNumber(insertBill.getTransactionNumber());
+			insertBill2.setUser(insertBill.getUser());
+			insertBill2.setWithDrawStatus(insertBill.isWithDrawStatus());
+			insertBill2.setWithDrawDateTime(insertBill.getWithDrawDateTime());
+			return insertBill2;
+		}
+
 
 	public void syncLocksData() {
 		List<Locks> locksList = locksRepository.findBySync(false);

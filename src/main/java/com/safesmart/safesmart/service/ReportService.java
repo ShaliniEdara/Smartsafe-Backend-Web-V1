@@ -72,6 +72,7 @@ import com.safesmart.safesmart.dto.StoreInfoResponse;
 import com.safesmart.safesmart.mangerreport.changeValetDenomiDtoManger;
 import com.safesmart.safesmart.mangerreport.changeValetDenomiDtoMangerChangeRe;
 import com.safesmart.safesmart.mangerreport.denominationDto;
+import com.safesmart.safesmart.model.ActionStatus;
 import com.safesmart.safesmart.model.ChangeRequest;
 import com.safesmart.safesmart.model.ChangeValetDenominations;
 import com.safesmart.safesmart.model.Dollar;
@@ -80,6 +81,7 @@ import com.safesmart.safesmart.model.SequenceInfo;
 import com.safesmart.safesmart.model.StoreInfo;
 import com.safesmart.safesmart.model.UserInfo;
 import com.safesmart.safesmart.model.ValetDenominations;
+import com.safesmart.safesmart.remoterepository.Remote_InsertBillRepository;
 import com.safesmart.safesmart.repository.ChangeRequestRepository;
 import com.safesmart.safesmart.repository.ChangeRquestDenominationsRepository;
 import com.safesmart.safesmart.repository.InsertBillRepository;
@@ -123,7 +125,14 @@ public class ReportService {
 	@Autowired
 	private  StoreInfoRepository storeInfoRepository;
 	
+	@Autowired
 	private StoreInfoBuilder storeInfoBuilder;
+	
+	@Autowired
+	private DataMigrationService dataMigrationService;
+	
+	@Autowired
+	private Remote_InsertBillRepository  remote_InsertBillRepository;
 
 	public ReprintReportDto rePrintReport(String storeName) {
 		StoreInfoResponse storeInfoResponse = storeInfoService.getStoreInfoService(storeName);
@@ -376,40 +385,62 @@ public class ReportService {
 		}
 		
 		//update Withdraw ststus  service
-		public String updateWithDrawSatus(String storename) {
-			StoreInfoResponse storeInfoResponse = storeInfoService.getStoreInfoService(storename);
-		    InsertBill insertBillInfo = new InsertBill();
-			if(storeInfoResponse != null) {
-				List<UserInfo>  userInfoList = userInfoRepository.findByStoreInfo_Id(storeInfoResponse.getId());
-				for(UserInfo userInfo : userInfoList) {
-					System.out.println("user ids are:"+userInfo.getId());
-					if(userInfo != null) {
-						//List<InsertBill> list = insertBillRepository.findByWithDrawStatus(false);
-						List<InsertBill> list = insertBillRepository.findByUser_IdAndWithDrawStatus(userInfo.getId(),false);
-						for(InsertBill insert : list) {
-							insertBillInfo.setWithDrawStatus(true);
-							insertBillInfo.setWithDrawDateTime(insert.getWithDrawDateTime());
-							insertBillInfo.setActionStatus(insert.getActionStatus());
-							insertBillInfo.setId(insert.getId());
-							insertBillInfo.setAmount(insert.getAmount());
-							insertBillInfo.setCreatedOn(insert.getCreatedOn());
-							insertBillInfo.setDateTime(insert.getDateTime());
-							insertBillInfo.setIdentifier(insert.getIdentifier());
-							insertBillInfo.setTransactionNumber(insert.getTransactionNumber());
-							insertBillInfo.setUser(insert.getUser());
-							insertBillInfo.setSync(insert.isSync());
-							insertBillRepository.save(insertBillInfo);
-							
-						}
-						
-						
-					}
-				}//user for loop end here
+				public String updateWithDrawSatus(String storename) {
+					StoreInfoResponse storeInfoResponse = storeInfoService.getStoreInfoService(storename);
+				    InsertBill insertBillInfo = new InsertBill();
+					if(storeInfoResponse != null) {
+						List<UserInfo>  userInfoList = userInfoRepository.findByStoreInfo_Id(storeInfoResponse.getId());
+						for(UserInfo userInfo : userInfoList) {
+							System.out.println("user ids are:"+userInfo.getId());
+							if(userInfo != null) {
+								//List<InsertBill> list = insertBillRepository.findByWithDrawStatus(false);
+								List<InsertBill> list = insertBillRepository.findByUser_IdAndWithDrawStatus(userInfo.getId(),false);
+								for(InsertBill insert : list) {
+									insertBillInfo.setWithDrawStatus(true);
+									insertBillInfo.setWithDrawDateTime(insert.getWithDrawDateTime());
+									insertBillInfo.setId(insert.getId());
+									insertBillInfo.setAmount(insert.getAmount());
+									insertBillInfo.setCreatedOn(insert.getCreatedOn());
+									insertBillInfo.setDateTime(insert.getDateTime());
+									insertBillInfo.setIdentifier(insert.getIdentifier());
+									insertBillInfo.setTransactionNumber(insert.getTransactionNumber());
+									insertBillInfo.setUser(insert.getUser());
+									insertBillInfo.setSync(insert.isSync());
+									insertBillInfo.setActionStatus(ActionStatus.Updated);
+									
+									InsertBill dbUserInfo = remote_InsertBillRepository.findByIdentifier(insertBillInfo.getIdentifier());
+									if (dbUserInfo == null) {
+										insertBillInfo.setSync(false);
+									}
 
-			}
-			
-			return "updated sucessfully";
-		}
+									try {
+										if(dbUserInfo != null) {
+										InsertBill upadtedUserInfo = dataMigrationService.convertToInsertBillMOdel(insertBillInfo,true);
+										upadtedUserInfo.setSync(true);
+										upadtedUserInfo.setId(dbUserInfo.getId());
+										upadtedUserInfo.setUser(dbUserInfo.getUser());
+										remote_InsertBillRepository.save(upadtedUserInfo);
+										}
+										
+									} catch (Exception e) {
+										insertBillInfo.setSync(false);
+									}
+
+									
+									insertBillRepository.save(insertBillInfo);
+									
+								}
+								
+								
+							}
+						}//user for loop end here
+
+					}
+					
+					return "updated sucessfully";
+				}
+
+
 	
 
 	public EODReport endOfDayReport(Long userId) {
